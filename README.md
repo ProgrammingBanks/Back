@@ -9,6 +9,63 @@
 ## node.js - express
 - Login : passport 사용 (로그인 사용할때 필수적으로 사용되는 모듈)
 <a href="http://www.passportjs.org/">passport.js</a>
+
+```js
+패스포트 예시
+./passport/index.js
+const passport = require('passport');
+const local = require('./local');
+const { User } = require('../models');
+
+module.exports = () => {
+  passport.serializeUser((user, done) => {
+    done(null, user.id);
+  });
+
+  passport.deserializeUser(async (id, done) => {
+    try {
+      const user = await User.findOne({ where: { id }});
+      done(null, user); // req.user
+    } catch (error) {
+      console.error(error);
+      done(error);
+    }
+  });
+
+  local();
+};
+
+./passport/local.js
+const passport = require('passport');
+const { Strategy: LocalStrategy } = require('passport-local');
+const bcrypt = require('bcrypt');
+const { User } = require('../models');
+
+module.exports = () => {
+  passport.use(new LocalStrategy({
+    usernameField: 'email',
+    passwordField: 'password',
+  }, async (email, password, done) => {
+    try {
+      const user = await User.findOne({
+        where: { email }
+      });
+      if (!user) {
+        return done(null, false, { reason: '존재하지 않는 이메일입니다!' });
+      }
+      const result = await bcrypt.compare(password, user.password);
+      if (result) {
+        return done(null, user);
+      }
+      return done(null, false, { reason: '비밀번호가 틀렸습니다.' });
+    } catch (error) {
+      console.error(error);
+      return done(error);
+    }
+  }));
+};
+
+```
 - helmet : http header의 보안관련 모듈
 - morgan : express 내에서 로그 기록 남김
 - express -view=ejs 폴더명 (express를 써서 간단한 필요 모듈을 설치하자)
