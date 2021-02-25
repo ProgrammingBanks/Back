@@ -50,7 +50,7 @@ pm2 show API
 
 ## mysql-sequelize
 - ORM을 지원해주는 라이브러리
-- 하지만 우리는 코드로 테이블을 귀찮기 때문에 workbench er 다이어그램 으로  테이블을 만들것이다.
+- 하지만 우리는 코드로 테이블을 만드는것은 귀찮기 때문에 workbench er 다이어그램 으로  테이블을 만들것이다.
 - 만든 테이블은 sequelize auto로 만들어진 테이블을 코드화를 진행.
 ```js
 sequelize-auto -o "./models" -d DB이름 -h localhost -u root -p 3306 -x root -e mysql
