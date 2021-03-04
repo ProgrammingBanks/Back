@@ -22,6 +22,63 @@
 ## node.js - express
 - Login : passport 사용 (로그인 사용할때 필수적으로 사용되는 모듈)
 <a href="http://www.passportjs.org/">passport.js</a>
+
+```js
+패스포트 예시
+./passport/index.js
+const passport = require('passport');
+const local = require('./local');
+const { User } = require('../models');
+
+module.exports = () => {
+  passport.serializeUser((user, done) => {
+    done(null, user.id);
+  });
+
+  passport.deserializeUser(async (id, done) => {
+    try {
+      const user = await User.findOne({ where: { id }});
+      done(null, user); // req.user
+    } catch (error) {
+      console.error(error);
+      done(error);
+    }
+  });
+
+  local();
+};
+
+./passport/local.js
+const passport = require('passport');
+const { Strategy: LocalStrategy } = require('passport-local');
+const bcrypt = require('bcrypt');
+const { User } = require('../models');
+
+module.exports = () => {
+  passport.use(new LocalStrategy({
+    usernameField: 'email',
+    passwordField: 'password',
+  }, async (email, password, done) => {
+    try {
+      const user = await User.findOne({
+        where: { email }
+      });
+      if (!user) {
+        return done(null, false, { reason: '존재하지 않는 이메일입니다!' });
+      }
+      const result = await bcrypt.compare(password, user.password);
+      if (result) {
+        return done(null, user);
+      }
+      return done(null, false, { reason: '비밀번호가 틀렸습니다.' });
+    } catch (error) {
+      console.error(error);
+      return done(error);
+    }
+  }));
+};
+
+```
 - helmet : http header의 보안관련 모듈
 - morgan : express 내에서 로그 기록 남김
 - express -view=ejs 폴더명 (express를 써서 간단한 필요 모듈을 설치하자)
@@ -63,7 +120,7 @@ pm2 show API
 
 ## mysql-sequelize
 - ORM을 지원해주는 라이브러리
-- 하지만 우리는 코드로 테이블을 귀찮기 때문에 workbench er 다이어그램 으로  테이블을 만들것이다.
+- 하지만 우리는 코드로 테이블을 만드는것은 귀찮기 때문에 workbench er 다이어그램 으로  테이블을 만들것이다.
 - 만든 테이블은 sequelize auto로 만들어진 테이블을 코드화를 진행.
 ```js
 sequelize-auto -o "./models" -d DB이름 -h localhost -u root -p 3306 -x root -e mysql
@@ -80,6 +137,107 @@ sequelize-auto -o "./models" -d DB이름 -h localhost -u root -p 3306 -x root -e
 - 알파인 
 - http://localhost:80/
 - mysql : ip: localhost , port 3306
+
+## 사용 라이브러리
+
+- 칼만 필터
+
+> 칼만 필터는 과거의 정보와 새로운 측정값을 사용하여 측정값에 포함된 잡음을 제거시켜 값을 최적화 하는 필터
+<a href="https://github.com/wouterbulten/kalmanjs"> kalmanjs </a>
+
+- 사용법 예시
+```js
+var KalmanFilter = require('kalmanjs')
+
+var kf = new KalmanFilter();
+console.log(kf.filter(3));
+console.log(kf.filter(2));
+console.log(kf.filter(1));
+
+```
+
+```js
+//Generate a simple static dataset
+var dataConstant = Array.apply(null, {length: dataSetSize}).map(function() {
+  return 4;
+});
+//Add noise to data
+var noisyDataConstant = dataConstant.map(function(v) {
+  return v + randn(0, 3);
+});
+
+//Apply kalman filter
+var kalmanFilter = new KalmanFilter({R: 0.01, Q: 3});
+
+var dataConstantKalman = noisyDataConstant.map(function(v) {
+  return kalmanFilter.filter(v);
+});
+```
+
+## Admin
+> sequelize - express를 사용해서 만드는게 적정
+<a href="https://github.com/ForestAdmin/forest-express-sequelize">Admin 페이지</a>
+
+## JWT
+>서버에 부담을 적게 주기위해 사용
+> 사용처는 정보교류(보안), 회원인증
+
+- 설치 : npm isntall jsonwebtoken rand-token
+
+- 우리는 passport와 JWT를 같이 써야한다
+```js
+//passport/index.js
+const passport = require("passport");
+const passportJWT = require("passport-jwt");
+const bcrypt = require("bcrypt");
+
+const JWTStrategy = passportJWT.Strategy;
+const { ExtractJwt } = passportJWT;
+const LocalStrategy = require("passport-local").Strategy;
+```
+
+- ID,PWD에 대한 전략
+```js
+const LocalStrategyOption = {
+  username: "UserId",
+  userpwd: "PWD",
+};
+async function idpwVerify(id, pwd, done) {
+  let user;
+  try {
+    user = await userDAO.find(id);
+
+    if (!user) return done(null, false);
+    const CorrectPassword = await bcrypt.compare(pwd, user.userpwd);
+    if (!CorrectPassword) return done(null, false);
+  } catch (e) {
+    done(e);
+  }
+  return done(null, user);
+}
+```
+- 토큰 전략 생성
+```js
+const jwtStrategyOption = {
+  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+  secretOrKey: global.config.secret,
+};
+
+async function jwtVerifty(payload, done) {
+  let user;
+  try {
+    user = await userDAO.find(payload.uid);
+    if (!user) return done(null, false);
+  } catch (e) {
+    return done(e);
+  }
+  return done(null, user);
+}
+```
+
+## 날씨 정보
+- 기상청 RSS 사용
+- http://www.kma.go.kr/wid/queryDFSRSS.jsp?zone=2714076000
 
 ## 해야할일
 - [ ] 백엔드 문서 설계화
