@@ -123,7 +123,9 @@ pm2 show API
 - 하지만 우리는 코드로 테이블을 만드는것은 귀찮기 때문에 workbench er 다이어그램 으로  테이블을 만들것이다.
 - 만든 테이블은 sequelize auto로 만들어진 테이블을 코드화를 진행.
 ```js
-sequelize-auto -o "./models" -d DB이름 -h localhost -u root -p 3306 -x root -e mysql
+yarn sequelize-auto -o "./models" -d DB이름 -h mysql -u root -p 3306 -x root -e mysql
+
+여기서 host는 localhost가 아니라 컨테이너 이름으로 지정
 ```
 - 위 명령어를 통해 er다이어 그램으로 만들어진 테이블이 /usr/src/app/model안에 들어가게 될것이다.
 - 그뒤 부터는 orm을 사용하면된다.
