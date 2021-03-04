@@ -2,6 +2,19 @@
 
 <img src="./backimage.jpg"/>
 
+## 추가점
+- redis 추가 (공부차원에서 넣어봄 신경쓰지 말것)
+- redis 시험 페이지 index.js에 적용
+- redis session 적용가능
+- sequelize, seqeulize-auto, express 구동확인
+- 기존의 도커는 호스팅을 중점으로 파일을 만들었다
+- 지금 세팅은 개발에 집중하게  docker-compse.yml 23번째 줄에 command: tail -f /dev/null을 삽입
+
+## 필독
+- command: tail -f /dev/null 도커 프로세스가 끝나도 종료되지 않게 세팅
+- vscode나 ssh로 연결해서 node 컨테이너로 들어간후 yarn dev || npm run dev를 쳐서 실행할것
+- 치고나면 log가 나오지 않을것인데 그것은 pm2 monit쳐서 확인 가능하다
+
 ## docker 
 - docker-compose up -d build를 통해 백그라운드와 빌드를 동시 가능
 - docker-compose에서 command를 통해 시작할때 서버와 mysql nginx가 실행되게 하였다.

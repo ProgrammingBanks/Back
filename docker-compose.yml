@@ -19,12 +19,17 @@ services:
       context: ./node
     container_name: node
     entrypoint: dockerize -wait tcp://mysql:3306 -timeout 5m
-    command:  ["pm2-runtime", "index.js","--watch","--no-daemon"]
+    command: tail -f /dev/null
+    # command:  ["pm2-runtime", "app.js","--watch"]
     networks:
       - node_nginx
       - node_mysql
+      - node_redis
     depends_on:
       - mysql
+      - redis
+    ports:
+      - 8081:8081
     restart: "unless-stopped"
   mysql:
     image: mysql:5.7
@@ -41,8 +46,17 @@ services:
       - 3306:3306
     networks:
       - node_mysql
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - 3307:3307
+    networks: 
+      - node_redis
 networks:
   node_nginx:
     driver: bridge
   node_mysql:
+    driver: bridge
+  node_redis:
     driver: bridge
