@@ -1,3 +1,5 @@
+// 로그인 미들웨워
+
 exports.isLoggedIn = (req, res, next) => {
     if (req.isAuthenticated()) {
       next();

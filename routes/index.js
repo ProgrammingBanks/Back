@@ -2,16 +2,21 @@ const express = require('express');
 const router = express.Router(); 
 const redis = require('redis'); 
 
-const redisClient = redis.createClient({ 
-    host : "redis", 
-}); 
+/* 세션 저장 예제 */ 
 
-/* GET home page. */ 
+router.get('/test/:value',function(req,res,next){
+    req.session.redsess = req.params.value;
+    res.send("저장"+req.params.value);
+})
+
 router.get('/', function(req, res, next) { 
-    redisClient.set("NAME","kim")
-    redisClient.get("NAME" , (err , result) => { 
-        res.send(result) 
-    }); 
+   if(req.session.redsess){
+       res.send("true , "+req.session.redsess);
+   }
+   else{
+    res.send("true , "+req.session.redsess);
+   }
 });
+
 
 module.exports = router;
