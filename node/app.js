@@ -14,6 +14,7 @@ const { sequelize } = require('./models');
 const indexRouter = require('./routes/index');
 const userRouter = require('./routes/user');
 const passportConfig = require('./passport');
+const messageRouter = require('./routes/message');
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use(session(sess));
 // 라우터 추가
 app.use('/', indexRouter);
 app.use('/users', userRouter);
+app.use('/messages', messageRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
