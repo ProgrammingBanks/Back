@@ -25,7 +25,7 @@ router.post('/login', isNotLoggedIn, (req, res, next) => {
           console.error(loginErr);
           return next(loginErr);
         }
-        const fullUserWithoutPaWssword = await clientTB.findOne({
+        const fullUserWithoutPassword = await clientTB.findOne({
           where: { id: user.id },
           attributes: {
             exclude: ['password']
