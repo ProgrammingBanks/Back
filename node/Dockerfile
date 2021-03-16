@@ -2,6 +2,8 @@ FROM node:15
 
 WORKDIR /usr/src/app
 
+LABEL "purpose"="webdev"
+
 RUN apt-get update && apt-get install -y wget
 
 ENV DOCKERIZE_VERSION v0.6.1
@@ -18,6 +20,6 @@ ENV PM2_SECRET_KEY uzc2e7x174an0ld
 
 RUN npm install
 
-EXPOSE 3000
+# EXPOSE 3000
 
 CMD tail -f /dev/null
