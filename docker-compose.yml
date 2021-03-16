@@ -18,6 +18,9 @@ services:
     build:
       context: ./node
     container_name: node
+    volumes:
+      - ./node/:/usr/src/app
+      - exclude:/usr/src/app/node_modules/
     entrypoint: dockerize -wait tcp://mysql:3306 -timeout 5m
     command: tail -f /dev/null
     # command:  ["pm2-runtime", "app.js","--watch"]
