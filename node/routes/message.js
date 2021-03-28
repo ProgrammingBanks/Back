@@ -30,7 +30,7 @@ router.post('/message', isLoggedIn, async (req, res, next) => {
   const msgTrn = await sequelize.transaction();
 
   await msgTB.create({
-    asn: req.body.nsc,
+    asn: req.body.asn,
     csn:  req.body.csn,
     title: req.body.title,
     content : req.body,content
@@ -62,8 +62,8 @@ router.post('/message', isLoggedIn, async (req, res, next) => {
           req.body.csn, 
           req.body.nsc);
 
-       /*로그인 횟수 불일치 */
-     } else if(req.user.nsc !== req.session.passport.user.nsc) { 
+       /*클라이언트 본인 또는 어드민이 아닌 경우, 유효하지 않은 접근*/
+     } else if(req.user.csn !== req.session.passport.user.csn || !req.admin) { 
         return packPayloadRes(
           res,
           h.resCode.cltFarm05.unvaildReq, 
