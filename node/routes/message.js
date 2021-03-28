@@ -19,7 +19,7 @@ var router = express.Router();
 
 
 // 메세지 저장
-router.post('/message', isLoggedIn, async (req, res) => {
+router.post('/', isLoggedIn, async (req, res) => {
 
   const msgTrn = await sequelize.transaction();
      console.log(typeof( req.user.csn))
@@ -64,7 +64,7 @@ router.post('/message', isLoggedIn, async (req, res) => {
 }
 
 */
-  router.get('/message', isLoggedIn, async (req, res, next) => { 
+  router.get('/', isLoggedIn, async (req, res, next) => { 
 
     try {
       console.log(`SV | DEBUG | cltFarm04 | FIND | ${req.user.clientName}\n`);

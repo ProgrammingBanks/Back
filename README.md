@@ -3,13 +3,13 @@
 
 ## 추가점
 - 메세지 GET / POST
-- Kafka-node 적용
+- Kafka-node 적용 (안할수도있음 : https://programmerdaddy.tistory.com/80)
 
 ## api
-POST /message : 로그인 확인 후, 관리자에게 보내는 메세지 생성하기
+POST /messages : 로그인 확인 후, 관리자에게 보내는 메세지 생성하기
 
 
-GET /message : 로그인 확인 후(관리자 또는 본인 확인), 메세지 가져오기
+GET /messages : 로그인 확인 후(관리자 또는 본인 확인), 메세지 가져오기
 
 ## 해야할일
 - [ ] 백엔드 문서 설계화
