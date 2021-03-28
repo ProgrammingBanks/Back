@@ -89,7 +89,7 @@ router.post('/', isLoggedIn, async (req, res) => {
           req.user.csn, 
           req.user.nsc)
      }
-     const messageList = await msgTB.findOne({
+     const messageList = await msgTB.findAll({
       attributes: ['title', 'content'],
       where: {
         csn: req.user.csn
