@@ -9,29 +9,6 @@ const {packPayloadRes} =require('../lib/response')
 
 var router = express.Router();
 
-// /* 요청응답 전송 */
-// function sendPaylaod(res, payload) {
-//   if(payload.resCode === 0) {
-//     res.status(200).send(payload);
-//   } else if (payload.resCode === 1) {
-//     res.status(500).send(payload);
-//   } else {
-//     res.status(400).send(payload);
-//   }
-// }
-// /* 응답 payload Pack */
-// function packPayloadRes(res, resCode, msgType, reason, csn, nsc, content) {
-//   const payload = {
-//     resCode,
-//     msgType,
-//     reason,
-//     csn,
-//     nsc,
-//     content
-//   }
-//   return sendPaylaod(res, payload);
-// }
-
  /*클라이언트 회원가입 요청 : cltAcc01*/
  router.post('/', isNotLoggedIn, async (req, res, next) => { // POST /user/
   const signUpTrn = await sequelize.transaction();

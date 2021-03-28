@@ -5,49 +5,60 @@ const { Op } = require('sequelize');
 const h = require('../lib/header');
 const {packPayloadRes} =require('../lib/response')
 
-const {msgTB}= require('../models');
+const {msgTB, sequelize}= require('../models');
 const { isLoggedIn, isNotLoggedIn } = require('./middlewares');
 
 
 var router = express.Router();
+/*
+메세지 저장 전 어드민 계정을 생성해둬야 함
+*/
+
 
 // 메세지 저장
-router.post('/message', isLoggedIn, async (req, res, next) => {
-   console.log(`SV | DEBUG | cltFarm03 | MESSAGE |${req.session.user}\n`);
-  if(req.user === null) {
-    return packPayloadRes(
-      res, 
-      h.resCode.cltAcc04.noUserData,
-      h.msgType.cltAcc04Res,
-      "메세지 저장 불가능 사용자" )
-  } else if(req.session.passport.user.nsc !== req.user.nsc) {
-    return packPayloadRes(
-      res, 
-      h.resCode.cltAcc04.unvaildReq,
-      h.msgType.cltAcc04Res,
-      "유효하지 않은 접근" )
-  }
-  const msgTrn = await sequelize.transaction();
+router.post('/', isLoggedIn, async (req, res) => {
 
+  const msgTrn = await sequelize.transaction();
+     console.log(typeof( req.user.csn))
+   console.log(`SV | DEBUG | cltFarm04 | MESSAGE |${req.session.passport.user}\n`);
+  
+  console.log(req.user)
+  console.log(req.body)
   await msgTB.create({
-    asn: req.body.nsc,
-    csn:  req.body.csn,
+    asn:  req.body.asn,
+    csn:  req.user.csn,
     title: req.body.title,
-    content : req.content
+    content : req.body.content
   }, {transaction: msgTrn});
   await msgTrn.commit();
-
+  
          return packPayloadRes(
-          res, 
-          h.resCode.cltFarm04Res,
-          h.msgType.cltAcc04Res,
-          req.body.csn,
-          req.body.nsc
+          res,
+          h.resCode.cltAcc04.OK,
+          h.msgType.cltFarm04Res,
+          "메세지 생성 성공"
        )
    
-  });
+   
+         });
 // 자기 채팅 목록을 가져옴
-  router.get('/message', isLoggedIn, async (req, res, next) => { 
+
+/*
+어드민 체크하는게 생기면 추가 예정
+메세지 요청 시 응답 형식 
+{
+    "resCode": ,
+    "msgType": ,
+    "reason":,
+    "csn": ,
+    "nsc": ,
+    "content": {
+        "title": "",
+        "content": ""
+    }
+}
+*/
+  router.get('/', isLoggedIn, async (req, res, next) => { 
 
     try {
       console.log(`SV | DEBUG | cltFarm04 | FIND | ${req.user.clientName}\n`);
@@ -58,18 +69,19 @@ router.post('/message', isLoggedIn, async (req, res, next) => {
           h.resCode.cltFarm05.noUserData, 
           h.msgType.cltFarm05Res, 
           "없는 사용자의 메세지 정보요청",
-          req.body.csn, 
-          req.body.nsc);
+          req.user.csn, 
+          req.user.nsc
+        )
 
-       /*로그인 횟수 불일치 */
-     } else if(req.user.nsc !== req.session.passport.user.nsc) { 
+       /*클라이언트 본인 또는 어드민이 아닌 경우, 유효하지 않은 접근*/
+     } else if(req.user.csn != req.session.passport.user.csn) { 
         return packPayloadRes(
           res,
           h.resCode.cltFarm05.unvaildReq, 
           h.msgType.cltFarm05Res, 
           "유효하지 않은 접근",
-          req.body.csn, 
-          req.body.nsc);
+          req.user.csn, 
+          req.user.nsc)
      }
      const messageList = await msgTB.findOne({
       attributes: ['title', 'content'],
@@ -80,19 +92,21 @@ router.post('/message', isLoggedIn, async (req, res, next) => {
      return packPayloadRes(
         res,
         h.resCode.cltfarm05.OK, 
-        
+        h.msgType.cltFarm01Res,
         "사용자 메세지 조회 성공", 
-        req.body.csn, 
-        req.body.nsc,
-        messageList);
+        req.user.csn, 
+        req.user.nsc,
+        messageList
+        );
 
+    
 } catch(err) {
   return packPayloadRes(
-    h.resCode.cltFarm05.unknownErr, 
+    h.resCode.cltfarm05.unknownErr, 
     h.msgType.cltFarm05Res,
     "기타오류", 
-    req.body.csn, 
-    req.body.nsc
+    req.user.csn, 
+    req.user.nsc
     );
 }});
  
