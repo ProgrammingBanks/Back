@@ -20,7 +20,8 @@ router.post('/message', isLoggedIn, async (req, res, next) => {
       h.resCode.cltAcc04.noUserData,
       h.msgType.cltAcc04Res,
       "메세지 저장 불가능 사용자" )
-  } else if(req.session.passport.user.nsc !== req.user.nsc) {
+      //본인만 저장 req.user.nsc !== req.session.passport.user.nsc
+  } else if(req.session.passport.user.csn !== req.user.csn) {
     return packPayloadRes(
       res, 
       h.resCode.cltAcc04.unvaildReq,
@@ -31,7 +32,7 @@ router.post('/message', isLoggedIn, async (req, res, next) => {
 
   await msgTB.create({
     asn: req.body.asn,
-    csn:  req.body.csn,
+    csn:  req.user.csn,
     title: req.body.title,
     content : req.body,content
   }, {transaction: msgTrn});
@@ -42,8 +43,8 @@ router.post('/message', isLoggedIn, async (req, res, next) => {
           h.resCode.cltFarm04Res,
           h.msgType.cltFarm04Res,
           "메세지 생성 성공",
-          req.body.csn,
-          req.body.nsc
+          req.user.csn, 
+          req.user.nsc 
        )
    
   });
@@ -59,18 +60,19 @@ router.post('/message', isLoggedIn, async (req, res, next) => {
           h.resCode.cltFarm05.noUserData, 
           h.msgType.cltFarm05Res, 
           "없는 사용자의 메세지 정보요청",
-          req.body.csn, 
-          req.body.nsc);
+          req.user.csn, 
+          req.user.nsc
+        )
 
        /*클라이언트 본인 또는 어드민이 아닌 경우, 유효하지 않은 접근*/
-     } else if(req.user.csn !== req.session.passport.user.csn || !req.admin) { 
+     } else if(req.user.csn !== req.session.passport.user.csn) { 
         return packPayloadRes(
           res,
           h.resCode.cltFarm05.unvaildReq, 
           h.msgType.cltFarm05Res, 
           "유효하지 않은 접근",
-          req.body.csn, 
-          req.body.nsc);
+          req.user.csn, 
+          req.user.nsc)
      }
      const messageList = await msgTB.findOne({
       attributes: ['title', 'content'],
@@ -83,10 +85,9 @@ router.post('/message', isLoggedIn, async (req, res, next) => {
         h.resCode.cltfarm05.OK, 
         h.msgType.cltFarm01Res,
         "사용자 메세지 조회 성공", 
-        req.body.csn, 
-        req.body.nsc,
-        messageList.title,
-        messageList.content
+        req.user.csn, 
+        req.user.nsc,
+        messageList
         );
 
     
@@ -95,8 +96,8 @@ router.post('/message', isLoggedIn, async (req, res, next) => {
     h.resCode.cltFarm05.unknownErr, 
     h.msgType.cltFarm05Res,
     "기타오류", 
-    req.body.csn, 
-    req.body.nsc
+    req.user.csn, 
+    req.user.nsc
     );
 }});
  
