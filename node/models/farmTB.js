@@ -2,17 +2,10 @@ const Sequelize = require('sequelize');
 module.exports = function(sequelize, DataTypes) {
   return sequelize.define('farmTB', {
     fsn: {
+      autoIncrement: true,
       type: DataTypes.INTEGER,
       allowNull: false,
       primaryKey: true
-    },
-    csn: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'clientTB',
-        key: 'csn'
-      }
     },
     asn: {
       type: DataTypes.INTEGER,
@@ -20,6 +13,14 @@ module.exports = function(sequelize, DataTypes) {
       references: {
         model: 'adminTB',
         key: 'asn'
+      }
+    },
+    csn: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'clientTB',
+        key: 'csn'
       }
     },
     farmAddr: {

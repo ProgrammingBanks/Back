@@ -14,6 +14,7 @@ const { sequelize } = require('./models');
 const indexRouter = require('./routes/index');
 const userRouter = require('./routes/user');
 const passportConfig = require('./passport');
+const messageRouter = require('./routes/message');
 
 const app = express();
 
@@ -32,8 +33,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-
-
 //redis session 사용
 const redisClient = redis.createClient({ host: 'redis', logErrors: true})
 const sess = {
@@ -43,13 +42,13 @@ const sess = {
   store: new RedisStore({ client: redisClient }),
 };
 app.use(session(sess));
-
+/* passport session 설정은 express 세션 이후에 초기화하도록 수정함 */
 app.use(passport.initialize());
 app.use(passport.session());
-
 // 라우터 추가
 app.use('/', indexRouter);
 app.use('/users', userRouter);
+app.use('/messages', messageRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
