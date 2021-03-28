@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const passport = require('passport');
 const { Op } = require('sequelize');
 const h = require('../lib/header');
-
+const {packPayloadRes} =require('../lib/response')
 
 const {msgTB}= require('../models');
 const { isLoggedIn, isNotLoggedIn } = require('./middlewares');
@@ -30,17 +30,18 @@ router.post('/message', isLoggedIn, async (req, res, next) => {
   const msgTrn = await sequelize.transaction();
 
   await msgTB.create({
-    asn: req.body.asn,
+    asn: req.body.nsc,
     csn:  req.body.csn,
     title: req.body.title,
-    content : req.content
+    content : req.body,content
   }, {transaction: msgTrn});
   await msgTrn.commit();
 
          return packPayloadRes(
-          res, 
+          res,
           h.resCode.cltFarm04Res,
-          h.msgType.cltAcc04Res,
+          h.msgType.cltFarm04Res,
+          "메세지 생성 성공",
           req.body.csn,
           req.body.nsc
        )
@@ -80,12 +81,15 @@ router.post('/message', isLoggedIn, async (req, res, next) => {
      return packPayloadRes(
         res,
         h.resCode.cltfarm05.OK, 
-        
+        h.msgType.cltFarm01Res,
         "사용자 메세지 조회 성공", 
         req.body.csn, 
         req.body.nsc,
-        messageList);
+        messageList.title,
+        messageList.content
+        );
 
+    
 } catch(err) {
   return packPayloadRes(
     h.resCode.cltFarm05.unknownErr, 
