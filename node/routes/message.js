@@ -30,7 +30,7 @@ router.post('/message', isLoggedIn, async (req, res, next) => {
   const msgTrn = await sequelize.transaction();
 
   await msgTB.create({
-    asn: req.body.nsc,
+    asn: req.body.asn,
     csn:  req.body.csn,
     title: req.body.title,
     content : req.content
