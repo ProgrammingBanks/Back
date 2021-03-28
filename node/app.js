@@ -32,8 +32,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-app.use(passport.initialize());
-app.use(passport.session());
+
 
 //redis session 사용
 const redisClient = redis.createClient({ host: 'redis', logErrors: true})
@@ -44,6 +43,9 @@ const sess = {
   store: new RedisStore({ client: redisClient }),
 };
 app.use(session(sess));
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 // 라우터 추가
 app.use('/', indexRouter);
