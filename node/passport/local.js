@@ -12,10 +12,16 @@ module.exports = () => {
     const loginTrn = await sequelize.transaction();
     try {
       const user = await clientTB.findOne({
-          attributes: ['csn', 'nsc', 'clientPw', 'clientName'],
+          attributes: ['csn', 'nsc', 'clientPw', 'clientName', 'client'],
           where: { 
             clientEmail: email 
           }});
+      const userFarm = await farmTB.findOne({
+        attributes : ['farmAddr', 'cropName'],
+        where: {
+          csn = user.csn
+        }
+      })
       /* 입력한 이메일 사용자 정보 없음 */
       if (!user) {
         return done(null, false, { 
@@ -38,10 +44,13 @@ module.exports = () => {
             transaction: loginTrn
         });
         await loginTrn.commit();
+        
         return done(null, {
           csn: user.csn,
           nsc: user.nsc,
-          clientName: user.clientName});
+          clientName: user.clientName,
+          farmAddr: userFarm.farmAddr,
+          cropName: userFarm.cropName});
       }
       return done(null, false, {
         resCode: h.resCode.cltAcc02.wrongPw, 
