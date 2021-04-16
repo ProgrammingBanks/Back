@@ -1,6 +1,7 @@
 var express = require('express');
 const bcrypt = require('bcrypt');
 const passport = require('passport');
+
 const { Op } = require('sequelize');
 const {clientTB, sequelize}= require('../models');
 const { isLoggedIn, isNotLoggedIn } = require('./middlewares');
@@ -8,21 +9,9 @@ const h = require('../lib/header');
 const {packPayloadRes} =require('../lib/response')
 
 var router = express.Router();
-const upload = multer({
-  storage : multer.diskStorage({
-    destination(req, file, done) {
-      done(null, '/profiles');
-    },
-    filename(req, file, done) {
-      const ext = path.extname(file.originalname);
-      done(null, path.basename(file.originalname, ext) + ext);
-    },
-  }),
-  limits: {fileSize:5*1024*1024},
-});
 
   /*클라이언트 회원가입 요청 : cltAcc01*/
-  router.post('/', isNotLoggedIn, upload.single('image'), async (req, res, next) => { // POST /user/
+  router.post('/', isNotLoggedIn, async (req, res, next) => { // POST /user/
     const signUpTrn = await sequelize.transaction();
     try {
       const exUser = await clientTB.findOne({

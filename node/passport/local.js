@@ -1,7 +1,7 @@
 const passport = require('passport');
 const { Strategy: LocalStrategy } = require('passport-local');
 const bcrypt = require('bcrypt');
-const { clientTB, sequelize } = require('../models');
+const { clientTB,farmTB ,sequelize } = require('../models');
 const h = require('../lib/header');
 
 module.exports = () => {
@@ -12,14 +12,14 @@ module.exports = () => {
     const loginTrn = await sequelize.transaction();
     try {
       const user = await clientTB.findOne({
-          attributes: ['csn', 'nsc', 'clientPw', 'clientName', 'client'],
+          attributes: ['csn', 'nsc', 'clientPw', 'clientName' ],
           where: { 
             clientEmail: email 
           }});
       const userFarm = await farmTB.findOne({
-        attributes : ['farmAddr', 'cropName'],
+        attributes : ['farmName', 'cropName'],
         where: {
-          csn = user.csn
+		csn : user.csn
         }
       })
       /* 입력한 이메일 사용자 정보 없음 */
@@ -43,20 +43,24 @@ module.exports = () => {
         }, {
             transaction: loginTrn
         });
-        await loginTrn.commit();
         
+        await loginTrn.commit();
+	console.log("here");
+
         return done(null, {
           csn: user.csn,
           nsc: user.nsc,
           clientName: user.clientName,
-          farmAddr: userFarm.farmAddr,
+          farmName: userFarm.farmName,
           cropName: userFarm.cropName});
+	      
       }
       return done(null, false, {
         resCode: h.resCode.cltAcc02.wrongPw, 
         msgType: h.msgType.cltAcc02Res,
         reason: '비밀번호가 틀렸습니다'});
     } catch (error) {
+	console.log("here2");
       await loginTrn.rollback();
       console.error(error);
       return done({
