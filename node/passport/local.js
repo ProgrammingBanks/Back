@@ -1,7 +1,7 @@
 const passport = require('passport');
 const { Strategy: LocalStrategy } = require('passport-local');
 const bcrypt = require('bcrypt');
-const { clientTB, sequelize } = require('../models');
+const { clientTB, farmTB, sequelize } = require('../models');
 const h = require('../lib/header');
 
 module.exports = () => {
@@ -12,16 +12,10 @@ module.exports = () => {
     const loginTrn = await sequelize.transaction();
     try {
       const user = await clientTB.findOne({
-          attributes: ['csn', 'nsc', 'clientPw', 'clientName', 'client'],
+          attributes: ['csn', 'nsc', 'clientPw', 'clientName', 'clientEmail'],
           where: { 
             clientEmail: email 
           }});
-      const userFarm = await farmTB.findOne({
-        attributes : ['farmAddr', 'cropName'],
-        where: {
-          csn = user.csn
-        }
-      })
       /* 입력한 이메일 사용자 정보 없음 */
       if (!user) {
         return done(null, false, { 
@@ -43,14 +37,28 @@ module.exports = () => {
         }, {
             transaction: loginTrn
         });
+        const farm = await farmTB.findOne({
+          attributes: ['farmName','cropName'],
+          where: {
+            csn: user.csn
+          }});
         await loginTrn.commit();
-        
-        return done(null, {
-          csn: user.csn,
-          nsc: user.nsc,
-          clientName: user.clientName,
-          farmAddr: userFarm.farmAddr,
-          cropName: userFarm.cropName});
+        if(farm === null) {
+          return done(null, {
+            csn: user.csn,
+            nsc: user.nsc,
+            clientName: user.clientName,
+            clientEmail: user.clientEmail
+            });
+        } else {
+          return done(null, {
+            csn: user.csn,
+            nsc: user.nsc,
+            clientName: user.clientName,
+            farmName: farm.farmName,
+            cropName: farm.cropName
+            });
+        }
       }
       return done(null, false, {
         resCode: h.resCode.cltAcc02.wrongPw, 

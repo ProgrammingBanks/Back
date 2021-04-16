@@ -1,6 +1,6 @@
 /* 요청응답 전송 */
 const sendPaylaod =(res, payload)=> {
-    if(payload.resCode === 1) {
+    if (payload.resCode === 1) {
       res.status(500).send(payload);
     } else {
       res.status(200).send(payload);
