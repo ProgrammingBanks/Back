@@ -19,7 +19,7 @@ module.exports = () => {
       const userFarm = await farmTB.findOne({
         attributes : ['farmAddr', 'cropName'],
         where: {
-          csn = user.csn
+          csn : user.csn
         }
       })
       /* 입력한 이메일 사용자 정보 없음 */
