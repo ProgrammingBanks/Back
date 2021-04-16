@@ -1,6 +1,8 @@
 var express = require('express');
 const bcrypt = require('bcrypt');
 const passport = require('passport');
+const multer = require('multer');
+
 const { Op } = require('sequelize');
 const {clientTB, sequelize}= require('../models');
 const { isLoggedIn, isNotLoggedIn } = require('./middlewares');
