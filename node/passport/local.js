@@ -3,13 +3,13 @@ const { Strategy: LocalStrategy } = require('passport-local');
 const bcrypt = require('bcrypt');
 const { clientTB, farmTB, sequelize } = require('../models');
 const h = require('../lib/header');
+const loginTrn =  sequelize.transaction();
 
 module.exports = () => {
   passport.use(new LocalStrategy({
     usernameField: 'clientEmail',
     passwordField: 'clientPw'
   }, async (email, password, done) => {
-    const loginTrn = await sequelize.transaction();
     try {
       const user = await clientTB.findOne({
           attributes: ['csn', 'nsc', 'clientPw', 'clientName', 'clientEmail'],
@@ -28,21 +28,19 @@ module.exports = () => {
       if (result) {
         /*로그인 횟수 로그인마다 +1*/
         user.nsc ++ ; 
-        await clientTB.update({
-          nsc: user.nsc
-        }, {
-            where: {
-              csn: user.csn
-            }
-        }, {
-            transaction: loginTrn
-        });
+        await sequelize.transaction(async (loginTrn) => {
+          await clientTB.update({
+            nsc: user.nsc
+          }, { where: { csn: user.csn }}, 
+          { transaction: loginTrn });
+          });
+    
         const farm = await farmTB.findOne({
           attributes: ['farmName','cropName'],
           where: {
             csn: user.csn
           }});
-        await loginTrn.commit();
+        
         if(farm === null) {
           return done(null, {
             csn: user.csn,
@@ -65,7 +63,6 @@ module.exports = () => {
         msgType: h.msgType.cltAcc02Res,
         reason: '비밀번호가 틀렸습니다'});
     } catch (error) {
-      await loginTrn.rollback();
       console.error(error);
       return done({
         resCode: h.resCode.cltAcc02.unknownErr, 

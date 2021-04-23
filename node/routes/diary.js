@@ -7,26 +7,26 @@ const router = express.Router();
 
 
 // 클라이언트 관리 다이어리 정보 입력 : cltFarm01
-router.post('/', isLoggedIn, async (req, res,next) => {
-  
-  const regiDairy = await sequelize.transaction();
+router.post('/:postDate',isLoggedIn, async (req, res,next) => {
   try{
     const exDiary = await diaryTB.findOne({
       where:{
         csn: req.user.csn,
-        postDate: req.body.postDate,
+        postDate: req.params.postDate,
     }})
     if (exDiary){
-      return res.status(403).send('해당날짜에 다이어리 정보있음');
+      return res.status(200).send({reason:"해당날짜에 다이어리 정보있음"})
     }
-    
-    await diaryTB.create({
-      csn: req.user.csn,
-      title: req.body.title,
-      content: req.body.content,
-      postDate: req.body.postDate
+
+    const regiDairyResult = await sequelize.transaction(async(t)=>{
+      const regiDairy = await diaryTB.create({
+        csn: req.user.csn,
+        title: req.body.diaryTitle,
+        content: req.body.diaryContent,
+        postDate: req.params.postDate},{transaction:t}
+      );
+      return regiDairy
     })
-    await regiDairy.commit();
     
     return packPayloadRes(
       res,
@@ -35,7 +35,6 @@ router.post('/', isLoggedIn, async (req, res,next) => {
       "다이어리 등록 성공"
     )
   } catch(err){
-    await regiDairy.rollback();
     return packPayloadRes(
       res,
       h.resCode.cltfarm05.unknownErr,
@@ -45,24 +44,24 @@ router.post('/', isLoggedIn, async (req, res,next) => {
   }
 });
 
-router.get('/:postDate', isLoggedIn, async (req, res, next) => { 
+router.get('/:postDate',isLoggedIn ,async (req, res, next) => { 
   try {
     const diary = await diaryTB.findOne({
-      attributes:['title','content'],
+      attributes:[['title','diaryTitle'],['content','diaryContent']],
       where:{
         csn: req.user.csn,
         postDate:req.params.postDate
       }
     })
     if (!diary){
-      return res.status(404).send('다이어리가 내용이 없습니다');
+      return res.status(200).send({reason:'다이어리가 내용이 없습니다'});
     }
     return packPayloadRes(
       res,
       h.resCode.cltfarm05.OK,
       h.msgType.cltFarm01Res,
       "다이어리 정보 조회 성공",
-      req.user.csn,
+      1,
       1,
       diary
     )
@@ -75,34 +74,33 @@ router.get('/:postDate', isLoggedIn, async (req, res, next) => {
     )
 }});
 
-router.patch('/update/:postDate', isLoggedIn, async (req, res, next) => {
-  const updateDiary = await sequelize.transaction();
-
+router.patch('/update/:postDate',isLoggedIn, async (req, res, next) => {
   try{
-    const test = await diaryTB.update({
-      title: req.body.title,
-      content: req.body.content,
-    },{
-      where : {
-        csn: req.user.csn,
-        postDate:req.params.postDate
-      }
-    },{transaction: updateDiary})
-    console.log(test)
-    if(test[0]==0){
-      res.send("변경할거없음")
+    const updateDairyResult = await sequelize.transaction(async(t)=>{
+      const updateDairy = await diaryTB.update({
+        title: req.body.diaryTitle,
+        content: req.body.diaryContent},
+        { 
+          where : {
+            csn: req.user.csn,
+            postDate:req.params.postDate
+          }
+        },{transaction:t}
+      ); 
+      return updateDairy
+    })
+    if(updateDairyResult[0]==0){
+      res.status(200).send({reason:"변경할거없음"})
     } 
     else{
-      updateDiary.commit();
       return packPayloadRes(
         res,
         h.resCode.cltfarm05.OK,
         h.msgType.cltFarm05res,
-        test,
+        "다이어리 수정 성공"
       )
     }
   }catch(err){
-    updateDiary.rollback();
     return packPayloadRes(
       res,
       h.resCode.cltfarm05.unknownErr,
@@ -113,20 +111,21 @@ router.patch('/update/:postDate', isLoggedIn, async (req, res, next) => {
 })
 
 router.delete('/delete/:postDate', isLoggedIn, async (req, res, next) => {
-  const deleteDiary = await sequelize.transaction();
-
   try{
-    const remover = await diaryTB.destroy({
-      where:{
-        csn: req.user.csn,
-        postDate:req.params.postDate
-      }
-    },{transaction: deleteDiary})
-    if(!remover){
-      res.status(403).send('삭제할 다이어리가 없음')
+    const removeDairyResult = await sequelize.transaction(async(t)=>{
+      const removeDairy = await diaryTB.destroy({
+        where:{
+          csn: req.user.csn,
+          postDate: req.params.postDate}
+        },{transaction:t}
+      );
+      return removeDairy
+    })
+
+    if(!removeDairyResult){
+      res.status(200).send({reason:'삭제할 다이어리가 없음'})
     }
     else{
-      deleteDiary.commit();
       return packPayloadRes(
         res,
         h.resCode.cltfarm05.OK,
@@ -135,7 +134,6 @@ router.delete('/delete/:postDate', isLoggedIn, async (req, res, next) => {
       )
     }
   }catch(err){
-    deleteDiary.rollback();
     return packPayloadRes(
       res,
       h.resCode.cltfarm05.unknownErr,

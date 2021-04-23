@@ -46,7 +46,8 @@ const resCode = {
     unknownErr: 1,
     noUserData: 2,
     unvaildReq: 3,
-    wrongPw: 4
+    wrongPw: 4,
+    dupEmail: 5
    },
    cltfarm05: {
     OK: 0,
