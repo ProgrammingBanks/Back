@@ -27,20 +27,20 @@ module.exports = () => {
       const result = await bcrypt.compare(password, user.clientPw);
       if (result) {
         /*로그인 횟수 로그인마다 +1*/
-        user.nsc ++ ; 
         await sequelize.transaction(async (loginTrn) => {
           await clientTB.update({
-            nsc: user.nsc
+            nsc: user.nsc + 1
           }, { where: { csn: user.csn }}, 
           { transaction: loginTrn });
           });
-    
+        user.nsc ++ ; 
+
         const farm = await farmTB.findOne({
           attributes: ['farmName','cropName'],
           where: {
             csn: user.csn
           }});
-        
+
         if(farm === null) {
           return done(null, {
             csn: user.csn,
@@ -62,6 +62,7 @@ module.exports = () => {
         resCode: h.resCode.cltAcc02.wrongPw, 
         msgType: h.msgType.cltAcc02Res,
         reason: '비밀번호가 틀렸습니다'});
+        
     } catch (error) {
       console.error(error);
       return done({

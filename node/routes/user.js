@@ -82,13 +82,13 @@ router.post('/login', isNotLoggedIn, (req, res, next) => {
         if (loginErr) {
           console.log(`SV | DEBUG | cltAcc02 | ERROR |\n`);
           console.error(loginErr);
-
+          
+          // return error : unknown err
           return packPayloadRes(
             res,
             h.resCode.cltAcc02.unknownErr,
             h.msgType.cltAcc02Res,
-            "기타오류"
-          );
+            "기타오류" );
         }
         
         /* send client data : csn, nsc, clientName +etc */
@@ -116,13 +116,14 @@ router.post('/login', isNotLoggedIn, (req, res, next) => {
         res, 
         h.resCode.cltAcc03.noUserData,
         h.msgType.cltAcc03Res,
-        "로그아웃 불가능 사용자" )
+        "로그아웃 불가능 사용자" );
+
     } else if(req.session.passport.user.nsc !== req.user.nsc) {
       return packPayloadRes(
         res, 
         h.resCode.cltAcc03.unvaildReq,
         h.msgType.cltAcc03Res,
-        "유효하지 않은 접근" )
+        "유효하지 않은 접근" );
     }
     req.logout();
     req.session.destroy();
@@ -145,8 +146,8 @@ router.post('/login', isNotLoggedIn, (req, res, next) => {
             h.resCode.cltAcc04.noUserData, 
             h.msgType.cltAcc04Res, 
             "없는 사용자 정보",
-            req.body.csn, 
-            req.body.nsc,
+            req.session.passport.csn, 
+            req.session.passport.nsc,
             profile);
 
          /*로그인 횟수 불일치 */
@@ -175,6 +176,7 @@ router.post('/login', isNotLoggedIn, (req, res, next) => {
           profile);
 
   } catch(err) {
+    console.log(err);
     return packPayloadRes(
       h.resCode.cltAcc04.unknownErr, 
       h.msgType.cltAcc04Res,
@@ -193,14 +195,15 @@ router.post('/login', isNotLoggedIn, (req, res, next) => {
       console.log(`SV | DEBUG | cltAcc05 | UPDATE | ${req.user.clientName}\n`);
       
       //중복 이메일 요청 확인 변수 : 요청자 제외한 유저 이메일 조회
-      let checkEmail = await findOne({
-        attributes : ["clientEmail"],
+      let checkEmail = await clientTB.findOne({
+        attributes : ['clientEmail'],
         where :{
+          clientEmail : req.body.clientEmail,
           csn :{
-            [Op.ne]: req.body.csn
+            [Op.ne]: req.user.csn
           }}
       });
-
+      console.log(checkEmail);
       if(!req.user) {
         console.log(`SV | DEBUG | cltAcc05 | UPDATE | NO_CLIENT_DATA\n`);
         return packPayloadRes(
@@ -213,7 +216,7 @@ router.post('/login', isNotLoggedIn, (req, res, next) => {
           profile);
 
       /*잘못된 세션 요청 */
-     } else if(req.session.passport.user.nsc !== req.user.nsc) { 
+    } else if(req.session.passport.user.nsc !== req.user.nsc) { 
         console.log(`SV | DEBUG | cltAcc05 | UPDATE | INCORRECT_NSC\n`);
         return packPayloadRes(
           res,
@@ -224,7 +227,7 @@ router.post('/login', isNotLoggedIn, (req, res, next) => {
           req.session.passport.user.nsc);
 
         /*중복 이메일 정보 */
-     } else if(checkEmail) {
+    } else if(checkEmail) {
       console.log(`SV | DEBUG | cltAcc05 | UPDATE | DUPLCATED_NSC\n`);
       return packPayloadRes(
         res,
@@ -233,25 +236,26 @@ router.post('/login', isNotLoggedIn, (req, res, next) => {
         "중복 이메일 변경 요청", 
         req.user.csn, 
         req.session.passport.user.nsc);
-     }
-
-    /*비밀번호 변경이 없는 경우 */ 
-     if(req.body.clientPw === null ||
-        req.body.clientPw === undefined ||
-        req.body.clientPw == ' ') {
-        console.log(`SV | DEBUG | cltAcc05 | UPDATE | NO_PW_CHANGE\n`);
-        /**사용자 정보 업데이트 passport, req */
-        await sequelize.transaction(async(updateTrn) => {
-          await clientTB.update({
-            nsc: ++ req.session.passport.user.nsc,
-            clientName: req.body.clientName,
-            clientEmail: req.body.clientEmail,
-            clientTel: req.body.clientTel,
-          },
-          { where: { csn: req.user.csn}
-        },
-          { transaction: updateTrn });
-        });
+    } else {
+          /*비밀번호 변경이 없는 경우 */ 
+        if(req.body.clientPw === null ||
+          req.body.clientPw === undefined ||
+          req.body.clientPw == " " ||
+          req.body.clientPw =="") {
+            
+          console.log(`SV | DEBUG | cltAcc05 | UPDATE | NO_PW_CHANGE\n`);
+          /**사용자 정보 업데이트 passport, req */
+          await sequelize.transaction(async(updateTrn) => {
+            await clientTB.update({
+              nsc: req.user.nsc + 1,
+              clientName: req.body.clientName,
+              clientEmail: req.body.clientEmail,
+              clientTel: req.body.clientTel,
+              },
+              { where: { csn: req.user.csn}
+            },
+            { transaction: updateTrn });
+          });
 
         return packPayloadRes(
           res,
@@ -259,55 +263,36 @@ router.post('/login', isNotLoggedIn, (req, res, next) => {
           h.msgType.cltAcc05Res, 
           "사용자 정보 변경 성공",
           req.user.csn, 
-          ++ req.user.nsc 
-        );
-      }
-      /* 비밀번호 변경이 포함되있는 경우 */
-     else {
-      console.log(`SV | DEBUG | cltAcc05 | UPDATE | WITH_PW_CHANGE\n`);
-      /*패스워드 변경 시 패스워드 비교  */
-      checkPw = await clientTB.findOne({
-        attributes : ["clientPw"],
-        where : {
-          csn : req.user.csn 
-        }
-      });
-      /*비밀번호 확인 */
-        const hashedPassword = await bcrypt.hash(req.body.newPw, 12);
-        const result = await bcrypt.compare(req.body.clientPw, checkPw.clientPw);
-        if(result) {
+          ++req.session.passport.user.nsc );
+
+        /*비밀번호 변경 포함 */
+      } else {
+          console.log(`SV | DEBUG | cltAcc05 | UPDATE | WITH_PW_CHANGE\n`);
+          const hashedPassword = await bcrypt.hash(req.body.clientPw, 12);
+          
           await sequelize.transaction(async(updateTrn) => {
             await clientTB.update({
-              nsc: ++ req.session.passport.user.nsc,
+              nsc: req.user.nsc + 1, 
               clientName: req.body.clientName,
               clientEmail: req.body.clientEmail,
               clientTel: req.body.clientTel,
               clientPw: hashedPassword
             },
-            { where: { csn: req.user.csn}},
-            { transaction: updateTrn });
+              { where: { csn: req.user.csn }},
+              { transaction: updateTrn });
           });
+
           return packPayloadRes(
             res,
             h.resCode.cltAcc05.OK, 
             h.msgType.cltAcc05Res, 
             "사용자 정보, 비밀번호 변경 성공",
             req.user.csn, 
-            ++ req.user.nsc
-          );
-        /*일치하지 않는 비밀번호 */  
-        } else {
-          return packPayloadRes(
-            res,
-            h.resCode.cltAcc05.wrongPw, 
-            h.msgType.cltAcc05Res,
-            "틀린 비밀번호", 
-            req.body.csn, 
-            req.body.nsc
-          );
-        }
-      }
+            ++req.session.passport.user.nsc );
+      } 
+    }
   } catch(err) {
+      console.log(err);
       return packPayloadRes(
         res,
         h.resCode.cltAcc05.unknownErr, 
@@ -316,6 +301,6 @@ router.post('/login', isNotLoggedIn, (req, res, next) => {
         req.body.csn, 
         req.body.nsc
       );
-}});
+  }});
 
 module.exports = router;

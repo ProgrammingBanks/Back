@@ -27,5 +27,12 @@
   "devDependencies": {
     "pm2": "4.5.5",
     "sequelize-cli": "^6.2.0"
-  }
+  },
+  "main": "app.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
 }
