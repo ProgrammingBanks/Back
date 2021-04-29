@@ -242,12 +242,12 @@ async function jwtVerifty(payload, done) {
 - http://www.kma.go.kr/wid/queryDFSRSS.jsp?zone=2714076000
 
 ## 해야할일
-- [ ] 백엔드 문서 설계화
-- [ ] rest-API 통신 문서 설계화
+- [x] 백엔드 문서 설계화
+- [x] rest-API 통신 문서 설계화
 - [x] 개발환경  구축
-- [ ] 로그인 구현 
-- [ ] 받아오는 자료에 대한 CRUD
-- [ ] 앱과의 통신
+- [x] 로그인 구현 
+- [x] 받아오는 자료에 대한 CRUD
+- [x] 앱과의 통신
 - [ ] 로드 밸런싱
 - [ ] AWS나 학교 서버에 배포  
 
